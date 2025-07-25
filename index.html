@@ -73,6 +73,7 @@
         });
       });
 
+    // Haritada tıklayınca form aç
     map.on('click', function(e) {
       const latlng = e.latlng;
       const form = `
@@ -87,7 +88,7 @@
         <label for="nitelik">Nitelik:</label>
         <select id="nitelik">
           <option value="Konut">Konut</option>
-          <option value="İş yeri">İş yeri</option>
+          <option value="İşyeri">İşyeri</option>
           <option value="Arsa">Arsa</option>
         </select>
         <label for="tarih">Tarih:</label>
@@ -97,6 +98,7 @@
       L.popup().setLatLng(latlng).setContent(form).openOn(map);
     });
 
+    // Kayıt işlemi
     function kaydet(lat, lng) {
       const veri = {
         ada: document.getElementById("ada").value,
@@ -109,6 +111,7 @@
       };
       veri.birim_fiyat = veri.fiyat / veri.metrekare;
 
+      // Haritaya ekle
       map.closePopup();
       L.marker([lat, lng]).addTo(map).bindPopup(
         `<b>${veri.nitelik}</b><br>
@@ -118,7 +121,8 @@
         Tarih: ${veri.tarih}`
       );
 
-      fetch("https://script.google.com/macros/s/AKfycbzc2oOVpQShVOgf8liklcrCPz5fyxwb3dPeuJFGYwx_G7-RGocygHsDsWDkeLXF9T3p/exec", {
+      // Google Sheets'e gönder
+      fetch("https://script.google.com/macros/s/AKfycbw_HPcfw8xsO-FjYL03Ab7LEwJpLQfVNk2KEMvq5h6UIRdslR0BvmyBtd135s1_dh4T/exec", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(veri)
