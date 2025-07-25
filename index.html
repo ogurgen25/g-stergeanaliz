@@ -11,6 +11,7 @@
       margin: 0;
       padding: 0;
       height: 100%;
+      width: 100%;
       font-family: 'Poppins', sans-serif;
     }
     #map {
@@ -50,28 +51,32 @@
       attribution: 'Tiles © Esri'
     }).addTo(map);
 
-    // Google Sheets veri çekme (ilk açılışta)
+    // Sheet'ten veri çek
     fetch("https://opensheet.elk.sh/1AK8QXOdNSzrDw-mZa6WQ9wG2Dp2uRuNjOS70UQSW6uQ/Sheet1")
-      .then(res => res.json())
+      .then(response => response.json())
       .then(data => {
         data.forEach(veri => {
           const lat = parseFloat(veri.Enlem);
           const lng = parseFloat(veri.Boylam);
-          const birim_fiyat = parseFloat(veri.Fiyat) / parseFloat(veri.Metrekare);
+          const fiyat = parseFloat(veri.Fiyat);
+          const m2 = parseFloat(veri.Metrekare);
+          const birim = fiyat / m2;
 
-          L.marker([lat, lng]).addTo(map).bindPopup(\`
-            <b>\${veri.Nitelik}</b><br>
-            Ada: \${veri.Ada}, Parsel: \${veri.Parsel}<br>
-            Fiyat: \${veri.Fiyat} ₺<br>
-            m²: \${veri.Metrekare} — \${Math.round(birim_fiyat)} ₺/m²<br>
-            Tarih: \${veri.Tarih}
-          \`);
+          L.marker([lat, lng]).addTo(map)
+            .bindPopup(
+              `<b>${veri.Nitelik}</b><br>
+              Ada: ${veri.Ada}, Parsel: ${veri.Parsel}<br>
+              Fiyat: ${fiyat.toLocaleString()} ₺<br>
+              m²: ${m2} — ${Math.round(birim)} ₺/m²<br>
+              Tarih: ${veri.Tarih}`
+            );
         });
       });
 
+    // Haritada tıklayınca form aç
     map.on('click', function(e) {
       const latlng = e.latlng;
-      const popupContent = `
+      const form = `
         <label for="ada">Ada:</label>
         <input id="ada" type="text">
         <label for="parsel">Parsel:</label>
@@ -83,51 +88,44 @@
         <label for="nitelik">Nitelik:</label>
         <select id="nitelik">
           <option value="Konut">Konut</option>
-          <option value="İşyeri">İşyeri</option>
+          <option value="İş yeri">İş yeri</option>
           <option value="Arsa">Arsa</option>
         </select>
         <label for="tarih">Tarih:</label>
         <input id="tarih" type="date">
         <button onclick="kaydet(${latlng.lat}, ${latlng.lng})">KAYDET</button>
       `;
-      L.popup().setLatLng(latlng).setContent(popupContent).openOn(map);
+      L.popup().setLatLng(latlng).setContent(form).openOn(map);
     });
 
+    // Kayıt işlemi
     function kaydet(lat, lng) {
-      const ada = document.getElementById("ada").value;
-      const parsel = document.getElementById("parsel").value;
-      const fiyat = parseFloat(document.getElementById("fiyat").value);
-      const metrekare = parseFloat(document.getElementById("metrekare").value);
-      const nitelik = document.getElementById("nitelik").value;
-      const tarih = document.getElementById("tarih").value;
-
       const veri = {
-        ada,
-        parsel,
-        fiyat,
-        metrekare,
-        birim_fiyat: fiyat / metrekare,
-        nitelik,
-        tarih,
+        ada: document.getElementById("ada").value,
+        parsel: document.getElementById("parsel").value,
+        fiyat: parseFloat(document.getElementById("fiyat").value),
+        metrekare: parseFloat(document.getElementById("metrekare").value),
+        nitelik: document.getElementById("nitelik").value,
+        tarih: document.getElementById("tarih").value,
         konum: [lat, lng]
       };
+      veri.birim_fiyat = veri.fiyat / veri.metrekare;
 
       map.closePopup();
-
-      L.marker([lat, lng]).addTo(map).bindPopup(\`
-        <b>\${nitelik}</b><br>
-        Ada: \${ada}, Parsel: \${parsel}<br>
-        Fiyat: \${fiyat.toLocaleString()} ₺<br>
-        m²: \${metrekare} — \${Math.round(veri.birim_fiyat)} ₺/m²<br>
-        Tarih: \${tarih}
-      \`);
+      L.marker([lat, lng]).addTo(map).bindPopup(
+        `<b>${veri.nitelik}</b><br>
+        Ada: ${veri.ada}, Parsel: ${veri.parsel}<br>
+        Fiyat: ${veri.fiyat.toLocaleString()} ₺<br>
+        m²: ${veri.metrekare} — ${Math.round(veri.birim_fiyat)} ₺/m²<br>
+        Tarih: ${veri.tarih}`
+      );
 
       fetch("https://script.google.com/macros/s/AKfycbzc2oOVpQShVOgf8liklcrCPz5fyxwb3dPeuJFGYwx_G7-RGocygHsDsWDkeLXF9T3p/exec", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(veri)
       }).then(res => {
-        if (res.ok) console.log("Google Sheets'e kaydedildi.");
+        if (res.ok) console.log("Sheets'e kaydedildi");
         else console.error("Kayıt başarısız:", res.status);
       }).catch(err => console.error("Hata:", err));
     }
