@@ -2,30 +2,135 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Satış Noktası Haritası</title>
+  <title> Emlak İndex Haritası</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Modern Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css" />
+  
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+    .leaflet-popup-content {
+      font-size: 14px;
+    }
+    .popup-form label {
+      display: block;
+      margin: 6px 0 2px;
+      font-weight: 600;
+      text-align: left;
+    }
+    .popup-form input,
+    .popup-form select {
+      width: 100%;
+      padding: 6px 10px;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      border: 1px solid #aaa;
+      font-weight: bold;
+    }
+    .popup-form button {
+      width: 100%;
+      padding: 8px;
+      font-weight: bold;
+      background-color: #0077ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <h2>Satış Noktası Haritası</h2>
-
-  <div class="panel">
-    <button onclick="jsonKaydet()">💾 Verileri JSON Olarak İndir</button>
-    <input type="file" id="jsonInput" onchange="jsonYukle()" />
-    <select onchange="filtrele(this.value)">
-      <option value="Tümü">🔍 Tümü</option>
-      <option value="Konut">Konut</option>
-      <option value="İşyeri">İşyeri</option>
-      <option value="Arsa">Arsa</option>
-    </select>
-    <button onclick="heatmapToggle()">🌡️ Heatmap Aç/Kapat</button>
-  </div>
-
-  <div id="analizPanel"></div>
   <div id="map"></div>
 
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-  <script src="main.js"></script>
+
+  <script>
+    const map = L.map('map').setView([39.905, 41.275], 13); // Erzurum
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri'
+    }).addTo(map);
+
+    const satislar = [];
+
+    map.on('click', function(e) {
+      const latlng = e.latlng;
+      const popupContent = `
+        <div class="popup-form">
+          <label for="ada">Ada:</label>
+          <input id="ada" type="text">
+
+          <label for="parsel">Parsel:</label>
+          <input id="parsel" type="text">
+
+          <label for="fiyat">Fiyat (₺):</label>
+          <input id="fiyat" type="number">
+
+          <label for="metrekare">m²:</label>
+          <input id="metrekare" type="number">
+
+          <label for="nitelik">Nitelik:</label>
+          <select id="nitelik">
+            <option value="Konut">Konut</option>
+            <option value="İşyeri">İşyeri</option>
+            <option value="Arsa">Arsa</option>
+          </select>
+
+          <label for="tarih">Tarih:</label>
+          <input id="tarih" type="date">
+
+          <button onclick="kaydet(${latlng.lat}, ${latlng.lng})">KAYDET</button>
+        </div>
+      `;
+      L.popup().setLatLng(latlng).setContent(popupContent).openOn(map);
+    });
+
+    function kaydet(lat, lng) {
+      const ada = document.getElementById("ada").value;
+      const parsel = document.getElementById("parsel").value;
+      const fiyat = parseFloat(document.getElementById("fiyat").value);
+      const metrekare = parseFloat(document.getElementById("metrekare").value);
+      const nitelik = document.getElementById("nitelik").value;
+      const tarih = document.getElementById("tarih").value;
+
+      const veri = {
+        ada,
+        parsel,
+        fiyat,
+        metrekare,
+        birim_fiyat: fiyat / metrekare,
+        nitelik,
+        tarih,
+        konum: [lat, lng]
+      };
+
+      satislar.push(veri);
+      map.closePopup();
+
+      const marker = L.marker([lat, lng]).addTo(map);
+      marker.bindPopup(`
+        <b>${nitelik}</b><br>
+        Ada: ${ada}, Parsel: ${parsel}<br>
+        Fiyat: ${fiyat.toLocaleString()} ₺<br>
+        m²: ${metrekare} — ${Math.round(veri.birim_fiyat)} ₺/m²<br>
+        Tarih: ${tarih}
+      `);
+    }
+  </script>
 </body>
 </html>
