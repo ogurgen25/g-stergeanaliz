@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Satış Noktası Haritası</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h2>Satış Noktası Haritası</h2>
+
+  <div class="panel">
+    <button onclick="jsonKaydet()">💾 Verileri JSON Olarak İndir</button>
+    <input type="file" id="jsonInput" onchange="jsonYukle()" />
+    <select onchange="filtrele(this.value)">
+      <option value="Tümü">🔍 Tümü</option>
+      <option value="Konut">Konut</option>
+      <option value="İşyeri">İşyeri</option>
+      <option value="Arsa">Arsa</option>
+    </select>
+    <button onclick="heatmapToggle()">🌡️ Heatmap Aç/Kapat</button>
+  </div>
+
+  <div id="analizPanel"></div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
