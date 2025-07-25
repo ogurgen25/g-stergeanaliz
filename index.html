@@ -52,7 +52,7 @@
     }).addTo(map);
 
     // Sheet'ten veri çek
-    fetch("https://opensheet.elk.sh/1AK8QXOdNSzrDw-mZa6WQ9wG2Dp2uRuNjOS70UQSW6uQ/Sayfa1")
+    fetch("https://opensheet.elk.sh/1JRlUEACUgjAWdZfuWMAAwnHzizC44R26cQ72Msv4RYc/Sayfa1")
       .then(response => response.json())
       .then(data => {
         data.forEach(veri => {
@@ -73,7 +73,6 @@
         });
       });
 
-    // Haritada tıklayınca form aç
     map.on('click', function(e) {
       const latlng = e.latlng;
       const form = `
@@ -98,7 +97,6 @@
       L.popup().setLatLng(latlng).setContent(form).openOn(map);
     });
 
-    // Kayıt işlemi
     function kaydet(lat, lng) {
       const veri = {
         ada: document.getElementById("ada").value,
